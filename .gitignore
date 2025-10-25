@@ -6,3 +6,5 @@ archive (1)/
 legal*/
 
 hindi-llm-finetuned/
+
+__pycache__

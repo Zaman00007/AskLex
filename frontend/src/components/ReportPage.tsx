@@ -9,28 +9,29 @@ interface Expert {
   experience: number;
   satisfiedClients: number;
   price: string;
+  phone: string;
 }
 
 const expertsData: Record<string, Expert[]> = {
   Theft: [
-    { name: "Ramesh Kumar Singh", experience: 8, satisfiedClients: 320, price: "₹600" },
-    { name: "Aditi Tiya Agarwal", experience: 5, satisfiedClients: 210, price: "₹450" },
+    { name: "Ramesh Kumar Singh", experience: 8, satisfiedClients: 320, price: "₹600", phone: "+91 9876543210" },
+    { name: "Aditi Tiya Agarwal", experience: 5, satisfiedClients: 210, price: "₹450", phone: "+91 9012345678" },
   ],
   Assault: [
-    { name: "Vimlesh Kumar Mandal", experience: 10, satisfiedClients: 400, price: "₹700" },
-    { name: "Kumar Aditya Chopra", experience: 6, satisfiedClients: 270, price: "₹500" },
+    { name: "Vimlesh Kumar Mandal", experience: 10, satisfiedClients: 400, price: "₹700", phone: "+91 9811122233" },
+    { name: "Kumar Aditya Chopra", experience: 6, satisfiedClients: 270, price: "₹500", phone: "+91 9900011122" },
   ],
   Fraud: [
-    { name: "Vishnu Nath Tiwari", experience: 12, satisfiedClients: 480, price: "₹850" },
-    { name: "Md Shahid Zaman", experience: 7, satisfiedClients: 350, price: "₹600" },
+    { name: "Vishnu Nath Tiwari", experience: 12, satisfiedClients: 480, price: "₹850", phone: "+91 9777766666" },
+    { name: "Md Shahid Zaman", experience: 7, satisfiedClients: 350, price: "₹600", phone: "+91 8888800000" },
   ],
-  "Cybercrime": [
-    { name: "Sneha Rajput", experience: 9, satisfiedClients: 390, price: "₹650" },
-    { name: "Rohit Anand", experience: 6, satisfiedClients: 250, price: "₹500" },
+  Cybercrime: [
+    { name: "Sneha Rajput", experience: 9, satisfiedClients: 390, price: "₹650", phone: "+91 9123456789" },
+    { name: "Rohit Anand", experience: 6, satisfiedClients: 250, price: "₹500", phone: "+91 9789090909" },
   ],
   Harassment: [
-    { name: "Anjali Verma", experience: 11, satisfiedClients: 460, price: "₹800" },
-    { name: "Manoj Bhatia", experience: 5, satisfiedClients: 240, price: "₹500" },
+    { name: "Anjali Verma", experience: 11, satisfiedClients: 460, price: "₹800", phone: "+91 9999911111" },
+    { name: "Manoj Bhatia", experience: 5, satisfiedClients: 240, price: "₹500", phone: "+91 9112233445" },
   ],
 };
 
@@ -41,16 +42,34 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentDone, setPaymentDone] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
   };
 
+  const handleChatNow = (expert: Expert) => {
+    setSelectedExpert(expert);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDone(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowPaymentModal(false);
+    setPaymentDone(false);
+    setSelectedExpert(null);
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       {/* Left Section */}
-      <div className="w-full md:w-1/2 flex justify-center items-center p-8">
+      <div className="w-full md:w-1/2 flex justify-center items-center p-8 relative">
         {!submitted ? (
           <form
             onSubmit={handleSubmit}
@@ -152,16 +171,18 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
                       {expert.name}
                     </h3>
                     <p className="text-gray-600">
-                      Experience: <span className="font-medium">{expert.experience}</span> years
+                      Experience: {expert.experience} years
                     </p>
                     <p className="text-gray-600">
-                      Satisfied Clients:{" "}
-                      <span className="font-medium">{expert.satisfiedClients}</span>
+                      Satisfied Clients: {expert.satisfiedClients}
                     </p>
                     <p className="text-gray-700 font-semibold mt-2">
                       Chat Price: {expert.price}
                     </p>
-                    <button className="mt-3 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+                    <button
+                      onClick={() => handleChatNow(expert)}
+                      className="mt-3 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+                    >
                       Chat Now
                     </button>
                   </div>
@@ -183,8 +204,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
         </h2>
         <p className="text-gray-600 mb-6">
           View, download, or generate detailed reports about your submitted
-          cases. You can monitor case progress and track trends of crimes
-          reported through our platform.
+          cases. Monitor progress and connect with trusted legal experts.
         </p>
         <button
           onClick={onBack}
@@ -193,6 +213,55 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
           ← Back to Chat
         </button>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedExpert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-80 shadow-lg relative">
+            {!paymentDone ? (
+              <>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                  Pay {selectedExpert.price} to chat with {selectedExpert.name}
+                </h3>
+                <p className="text-gray-600 text-sm mb-4 text-center">
+                  Secure payment gateway simulation
+                </p>
+                <button
+                  onClick={handlePaymentSuccess}
+                  className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+                >
+                  Proceed to Pay
+                </button>
+                <button
+                  onClick={handleCloseModal}
+                  className="w-full mt-3 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-green-600 mb-2">
+                  ✅ Payment Successful!
+                </h3>
+                <p className="text-gray-700 mb-3">
+                  Expert Contact:{" "}
+                  <span className="font-medium">{selectedExpert.phone}</span>
+                </p>
+                <p className="text-sm text-gray-500 mb-4">
+                  You can now call or WhatsApp the expert directly.
+                </p>
+                <button
+                  onClick={handleCloseModal}
+                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

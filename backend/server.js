@@ -104,6 +104,68 @@ app.post('/report', async (req, res) => {
   }
 });
 
+app.get('/api/reports', (req, res) => {
+  const email = req.query.email;
+  if (!email) return res.status(400).json({ error: 'Missing email query' });
+  const results = [];
+  fs.createReadStream(REPORTS_FILE)
+    .pipe(csv())
+    .on('data', (data) => {
+      if (data.email === email) results.push(data);
+    })
+    .on('end', () => res.json(results))
+    .on('error', (err) => {
+      console.error(err);
+      res.status(500).json({ error: 'Error reading CSV file' });
+    });
+});
+
+app.post('/api/close-report', (req, res) => {
+  const report = req.body;
+  const rows = [];
+
+  fs.createReadStream(REPORTS_FILE)
+    .pipe(csv())
+    .on('data', (data) => rows.push(data))
+    .on('end', () => {
+      const filtered = rows.filter(
+        (r) =>
+          !(
+            r.email === report.email &&
+            r.crimeType === report.crimeType &&
+            r.incident === report.incident &&
+            r.culpritName === report.culpritName &&
+            r.date === report.date &&
+            r.time === report.time
+          )
+      );
+
+      const csvWriter = createObjectCsvWriter({
+        path: REPORTS_FILE,
+        header: [
+          { id: 'email', title: 'email' },
+          { id: 'crimeType', title: 'crimeType' },
+          { id: 'incident', title: 'incident' },
+          { id: 'culpritName', title: 'culpritName' },
+          { id: 'date', title: 'date' },
+          { id: 'time', title: 'time' },
+        ],
+      });
+
+      csvWriter
+        .writeRecords(filtered)
+        .then(() => res.json({ message: 'Report closed successfully!' }))
+        .catch((err) => {
+          console.error(err);
+          res.status(500).json({ error: 'Error updating CSV file' });
+        });
+    })
+    .on('error', (err) => {
+      console.error(err);
+      res.status(500).json({ error: 'Error reading CSV file' });
+    });
+});
+
 app.listen(PORT, () =>
   console.log(`✅ Server running at http://localhost:${PORT}`)
 );

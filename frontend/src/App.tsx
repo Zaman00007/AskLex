@@ -47,7 +47,7 @@ function App() {
 
   if (page === 'landing') return <LandingPage onLogin={() => setPage('login')} onRegister={() => setPage('register')} />;
   if (page === 'login') return <LoginPage onLoginSuccess={() => setPage('chat')} onBack={() => setPage('landing')} />;
-  if (page === 'register') return <RegisterPage onRegisterSuccess={() => setPage('chat')} onBack={() => setPage('landing')} />;
+  if (page === 'register') return <RegisterPage onRegisterSuccess={() => setPage('login')} onBack={() => setPage('landing')} />;
 
   return (
     <div className="h-screen bg-legal-light overflow-hidden">

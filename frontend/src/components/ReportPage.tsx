@@ -43,15 +43,15 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [message, setMessage] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
-  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Assume logged-in email is stored in localStorage
     const email = localStorage.getItem("userEmail");
     if (!email) {
       alert("You must be logged in to report a crime.");
@@ -62,21 +62,14 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
       const response = await fetch("http://localhost:5000/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          crimeType,
-          incident,
-          culpritName,
-          date,
-          time,
-        }),
+        body: JSON.stringify({ email, crimeType, incident, culpritName, date, time }),
       });
 
       const data = await response.json();
-
       if (response.ok) {
         setMessage("✅ Report submitted successfully!");
         setSubmitted(true);
+        setRefreshKey((prev) => prev + 1); // refresh dashboard
       } else {
         setMessage(`❌ ${data.message || "Failed to submit report"}`);
       }
@@ -84,7 +77,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
       console.error("Error submitting report:", error);
       setMessage("⚠️ Server error. Please try again later.");
     }
-
     setTimeout(() => setMessage(""), 3000);
   };
 
@@ -93,10 +85,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = () => {
-    setPaymentDone(true);
-  };
-
+  const handlePaymentSuccess = () => setPaymentDone(true);
   const handleCloseModal = () => {
     setShowPaymentModal(false);
     setPaymentDone(false);
@@ -110,31 +99,19 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
     setDate("");
     setTime("");
     setSubmitted(false);
-    setSelectedExpert(null);
-    setPaymentDone(false);
   };
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      {/* Left Side - Report Form */}
       <div className="w-full md:w-1/2 flex justify-center items-center p-8 relative">
         {!submitted ? (
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md"
-          >
-            <h2 className="text-xl font-semibold text-legal-navy mb-4 text-center">
-              File a New Report
-            </h2>
+          <form onSubmit={handleSubmit} className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-legal-navy mb-4 text-center">File a New Report</h2>
 
-            {message && (
-              <div className="text-center mb-4 text-sm font-medium text-green-600">
-                {message}
-              </div>
-            )}
+            {message && <div className="text-center mb-4 text-sm font-medium text-green-600">{message}</div>}
 
-            <label className="block text-gray-700 text-sm font-medium mb-2">
-              Type of Crime
-            </label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">Type of Crime</label>
             <select
               value={crimeType}
               onChange={(e) => setCrimeType(e.target.value)}
@@ -149,9 +126,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
               <option value="Harassment">Harassment</option>
             </select>
 
-            <label className="block text-gray-700 text-sm font-medium mb-2">
-              Incident Details
-            </label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">Incident Details</label>
             <textarea
               value={incident}
               onChange={(e) => setIncident(e.target.value)}
@@ -161,9 +136,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
               required
             ></textarea>
 
-            <label className="block text-gray-700 text-sm font-medium mb-2">
-              Name of Culprit
-            </label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">Name of Culprit</label>
             <input
               type="text"
               value={culpritName}
@@ -175,9 +148,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
 
             <div className="flex space-x-4 mb-4">
               <div className="flex-1">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Date
-                </label>
+                <label className="block text-gray-700 text-sm font-medium mb-2">Date</label>
                 <input
                   type="date"
                   value={date}
@@ -187,9 +158,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Time
-                </label>
+                <label className="block text-gray-700 text-sm font-medium mb-2">Time</label>
                 <input
                   type="time"
                   value={time}
@@ -200,38 +169,21 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-legal-navy text-white py-2 rounded-lg hover:bg-blue-800 transition"
-            >
+            <button type="submit" className="w-full bg-legal-navy text-white py-2 rounded-lg hover:bg-blue-800 transition">
               Submit Report
             </button>
           </form>
         ) : (
           <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md">
-            <h2 className="text-xl font-semibold text-legal-navy mb-4 text-center">
-              Recommended Legal Experts
-            </h2>
-
+            <h2 className="text-xl font-semibold text-legal-navy mb-4 text-center">Recommended Legal Experts</h2>
             {crimeType && expertsData[crimeType] ? (
               <div className="space-y-4">
                 {expertsData[crimeType].map((expert, i) => (
-                  <div
-                    key={i}
-                    className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition"
-                  >
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {expert.name}
-                    </h3>
-                    <p className="text-gray-600">
-                      Experience: {expert.experience} years
-                    </p>
-                    <p className="text-gray-600">
-                      Satisfied Clients: {expert.satisfiedClients}
-                    </p>
-                    <p className="text-gray-700 font-semibold mt-2">
-                      Chat Price: {expert.price}
-                    </p>
+                  <div key={i} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                    <h3 className="text-lg font-semibold text-gray-800">{expert.name}</h3>
+                    <p className="text-gray-600">Experience: {expert.experience} years</p>
+                    <p className="text-gray-600">Satisfied Clients: {expert.satisfiedClients}</p>
+                    <p className="text-gray-700 font-semibold mt-2">Chat Price: {expert.price}</p>
                     <button
                       onClick={() => handleChatNow(expert)}
                       className="mt-3 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
@@ -248,15 +200,16 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
                 </button>
               </div>
             ) : (
-              <p className="text-gray-500 text-center">
-                No experts found for this crime type.
-              </p>
+              <p className="text-gray-500 text-center">No experts found for this crime type.</p>
             )}
           </div>
         )}
       </div>
-      <ReportsDashboard onBack={onBack} />
 
+      {/* Right Side - Dashboard */}
+      <ReportsDashboard onBack={onBack} refreshTrigger={refreshKey} />
+
+      {/* Payment Modal */}
       {showPaymentModal && selectedExpert && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-80 shadow-lg relative">
@@ -265,9 +218,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                   Pay {selectedExpert.price} to chat with {selectedExpert.name}
                 </h3>
-                <p className="text-gray-600 text-sm mb-4 text-center">
-                  Secure payment gateway simulation
-                </p>
+                <p className="text-gray-600 text-sm mb-4 text-center">Secure payment gateway simulation</p>
                 <button
                   onClick={handlePaymentSuccess}
                   className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
@@ -283,16 +234,11 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
               </>
             ) : (
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-green-600 mb-2">
-                  ✅ Payment Successful!
-                </h3>
+                <h3 className="text-lg font-semibold text-green-600 mb-2">✅ Payment Successful!</h3>
                 <p className="text-gray-700 mb-3">
-                  Expert Contact:{" "}
-                  <span className="font-medium">{selectedExpert.phone}</span>
+                  Expert Contact: <span className="font-medium">{selectedExpert.phone}</span>
                 </p>
-                <p className="text-sm text-gray-500 mb-4">
-                  You can now call or WhatsApp the expert directly.
-                </p>
+                <p className="text-sm text-gray-500 mb-4">You can now call or WhatsApp the expert directly.</p>
                 <button
                   onClick={handleCloseModal}
                   className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"

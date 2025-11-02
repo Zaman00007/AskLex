@@ -8,3 +8,5 @@ legal*/
 hindi-llm-finetuned/
 
 __pycache__
+
+node_modules

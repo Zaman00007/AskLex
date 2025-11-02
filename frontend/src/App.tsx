@@ -5,9 +5,10 @@ import ChatInterface from './components/ChatInterface';
 import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
+import ReportPage from './components/ReportPage';
 import { Conversation, Message } from './types';
 
-type Page = 'landing' | 'login' | 'register' | 'chat';
+type Page = 'landing' | 'login' | 'register' | 'chat' | 'report';
 
 function App() {
   const [page, setPage] = useState<Page>('landing');
@@ -52,7 +53,9 @@ function App() {
     if (!currentConversation) return;
     const updatedConversation = { ...currentConversation, messages, updatedAt: new Date() };
     setCurrentConversation(updatedConversation);
-    setConversations(prev => prev.map(conv => conv.id === currentConversation.id ? updatedConversation : conv));
+    setConversations(prev =>
+      prev.map(conv => (conv.id === currentConversation.id ? updatedConversation : conv))
+    );
   };
 
   const deleteConversation = (conversationId: string) => {
@@ -60,13 +63,47 @@ function App() {
     if (currentConversation?.id === conversationId) setCurrentConversation(null);
   };
 
-  if (page === 'landing') return <LandingPage onLogin={() => setPage('login')} onRegister={() => setPage('register')} />;
-  if (page === 'login') return <LoginPage onLoginSuccess={handleLoginSuccess} onBack={() => setPage('landing')} />;
-  if (page === 'register') return <RegisterPage onRegisterSuccess={() => setPage('login')} onBack={() => setPage('landing')} />;
+  // --- PAGE RENDERING SECTION ---
+  if (page === 'landing')
+    return (
+      <LandingPage
+        onLogin={() => setPage('login')}
+        onRegister={() => setPage('register')}
+      />
+    );
 
+  if (page === 'login')
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onBack={() => setPage('landing')}
+      />
+    );
+
+  if (page === 'register')
+    return (
+      <RegisterPage
+        onRegisterSuccess={() => setPage('login')}
+        onBack={() => setPage('landing')}
+      />
+    );
+
+  if (page === 'report')
+    return (
+      <ReportPage
+        onBack={() => setPage('chat')}
+      />
+    );
+
+  // --- MAIN CHAT PAGE ---
   return (
     <div className="h-screen bg-legal-light overflow-hidden">
-      <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} onNewCase={startNewCase} onLogout={handleLogout} />
+      <Header
+        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        onNewCase={startNewCase}
+        onLogout={handleLogout}
+        onReport={() => setPage('report')}
+      />
       <div className="flex h-full pt-16">
         <Sidebar
           isOpen={isSidebarOpen}
@@ -76,8 +113,16 @@ function App() {
           onDeleteConversation={deleteConversation}
           onNewCase={startNewCase}
         />
-        <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'lg:ml-80' : 'lg:ml-0'}`}>
-          <ChatInterface conversation={currentConversation} onUpdateConversation={updateConversation} onNewCase={startNewCase} />
+        <main
+          className={`flex-1 flex flex-col transition-all duration-300 ${
+            isSidebarOpen ? 'lg:ml-80' : 'lg:ml-0'
+          }`}
+        >
+          <ChatInterface
+            conversation={currentConversation}
+            onUpdateConversation={updateConversation}
+            onNewCase={startNewCase}
+          />
         </main>
       </div>
     </div>

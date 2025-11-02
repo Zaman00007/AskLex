@@ -66,6 +66,17 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
     setSelectedExpert(null);
   };
 
+  const handleReportAnotherCrime = () => {
+    setCrimeType("");
+    setIncident("");
+    setCulpritName("");
+    setDate("");
+    setTime("");
+    setSubmitted(false);
+    setSelectedExpert(null);
+    setPaymentDone(false);
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       {/* Left Section */}
@@ -187,6 +198,12 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
                     </button>
                   </div>
                 ))}
+                <button
+                  onClick={handleReportAnotherCrime}
+                  className="mt-4 w-full bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 transition"
+                >
+                  Report Another Crime
+                </button>
               </div>
             ) : (
               <p className="text-gray-500 text-center">
@@ -214,7 +231,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
         </button>
       </div>
 
-      {/* Payment Modal */}
       {showPaymentModal && selectedExpert && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-80 shadow-lg relative">

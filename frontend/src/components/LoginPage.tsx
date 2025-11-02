@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (userData: any) => void;
   onBack: () => void;
 }
 
@@ -26,8 +26,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Login failed');
 
+      const userData = { email: data.email, fullName: data.fullName };
+      sessionStorage.setItem('user', JSON.stringify(userData));
+
       alert('Login successful');
-      onLoginSuccess();
+      onLoginSuccess(userData);
     } catch (err: any) {
       setError(err.message);
     } finally {

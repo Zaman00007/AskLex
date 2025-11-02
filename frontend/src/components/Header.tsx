@@ -3,6 +3,7 @@ import React from 'react';
 interface HeaderProps {
   onMenuClick: () => void;
   onNewCase: () => void;
+  onLogout: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick, onNewCase }) => {

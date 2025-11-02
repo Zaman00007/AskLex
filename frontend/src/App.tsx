@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
@@ -14,6 +14,21 @@ function App() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const userSession = localStorage.getItem('userSession');
+    if (userSession) setPage('chat');
+  }, []);
+
+  const handleLoginSuccess = (userData: any) => {
+    localStorage.setItem('userSession', JSON.stringify(userData));
+    setPage('chat');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userSession');
+    setPage('landing');
+  };
 
   const startNewCase = () => {
     const newConversation: Conversation = {
@@ -46,12 +61,12 @@ function App() {
   };
 
   if (page === 'landing') return <LandingPage onLogin={() => setPage('login')} onRegister={() => setPage('register')} />;
-  if (page === 'login') return <LoginPage onLoginSuccess={() => setPage('chat')} onBack={() => setPage('landing')} />;
+  if (page === 'login') return <LoginPage onLoginSuccess={handleLoginSuccess} onBack={() => setPage('landing')} />;
   if (page === 'register') return <RegisterPage onRegisterSuccess={() => setPage('login')} onBack={() => setPage('landing')} />;
 
   return (
     <div className="h-screen bg-legal-light overflow-hidden">
-      <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} onNewCase={startNewCase} />
+      <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} onNewCase={startNewCase} onLogout={handleLogout} />
       <div className="flex h-full pt-16">
         <Sidebar
           isOpen={isSidebarOpen}

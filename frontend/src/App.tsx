@@ -28,6 +28,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('userSession');
+    localStorage.removeItem('userEmail');
     setPage('landing');
   };
 

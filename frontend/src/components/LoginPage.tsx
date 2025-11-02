@@ -28,6 +28,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) => {
 
       const userData = { email: data.email, fullName: data.fullName };
       sessionStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem("userEmail",  userData.email);
 
       alert('Login successful');
       onLoginSuccess(userData);

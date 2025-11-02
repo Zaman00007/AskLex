@@ -7,19 +7,26 @@ import bodyParser from 'body-parser';
 
 const app = express();
 const PORT = 5000;
-const CSV_FILE = './users.csv';
+const USERS_FILE = './users.csv';
+const REPORTS_FILE = './reports.csv';
 
 app.use(cors());
 app.use(bodyParser.json());
 
-if (!fs.existsSync(CSV_FILE)) {
-  fs.writeFileSync(CSV_FILE, 'fullName,email,password\n');
+// Initialize users.csv
+if (!fs.existsSync(USERS_FILE)) {
+  fs.writeFileSync(USERS_FILE, 'fullName,email,password\n');
+}
+
+// Initialize reports.csv
+if (!fs.existsSync(REPORTS_FILE)) {
+  fs.writeFileSync(REPORTS_FILE, 'email,crimeType,incident,culpritName,date,time\n');
 }
 
 const readUsers = () => {
   return new Promise((resolve, reject) => {
     const users = [];
-    fs.createReadStream(CSV_FILE)
+    fs.createReadStream(USERS_FILE)
       .pipe(csv())
       .on('data', (data) => users.push(data))
       .on('end', () => resolve(users))
@@ -29,7 +36,7 @@ const readUsers = () => {
 
 const addUser = async (user) => {
   const csvWriter = createObjectCsvWriter({
-    path: CSV_FILE,
+    path: USERS_FILE,
     header: [
       { id: 'fullName', title: 'fullName' },
       { id: 'email', title: 'email' },
@@ -40,6 +47,7 @@ const addUser = async (user) => {
   await csvWriter.writeRecords([user]);
 };
 
+// 🧩 Registration endpoint
 app.post('/register', async (req, res) => {
   const { fullName, email, password } = req.body;
   if (!fullName || !email || !password)
@@ -63,7 +71,37 @@ app.post('/login', async (req, res) => {
   if (!user)
     return res.status(401).json({ message: 'Invalid credentials' });
 
-  res.json({ message: 'Login successful', fullName: user.fullName });
+  res.json({ message: 'Login successful', fullName: user.fullName, email });
+});
+
+// 🧾 Submit report endpoint
+app.post('/report', async (req, res) => {
+  const { email, crimeType, incident, culpritName, date, time } = req.body;
+
+  if (!email || !crimeType || !incident || !culpritName || !date || !time) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  try {
+    const csvWriter = createObjectCsvWriter({
+      path: REPORTS_FILE,
+      header: [
+        { id: 'email', title: 'email' },
+        { id: 'crimeType', title: 'crimeType' },
+        { id: 'incident', title: 'incident' },
+        { id: 'culpritName', title: 'culpritName' },
+        { id: 'date', title: 'date' },
+        { id: 'time', title: 'time' },
+      ],
+      append: true,
+    });
+
+    await csvWriter.writeRecords([{ email, crimeType, incident, culpritName, date, time }]);
+    res.json({ message: 'Report saved successfully' });
+  } catch (error) {
+    console.error('Error writing report:', error);
+    res.status(500).json({ message: 'Failed to save report' });
+  }
 });
 
 app.listen(PORT, () =>

@@ -45,10 +45,46 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+
+    // Assume logged-in email is stored in localStorage
+    const email = localStorage.getItem("userEmail");
+    if (!email) {
+      alert("You must be logged in to report a crime.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          crimeType,
+          incident,
+          culpritName,
+          date,
+          time,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage("✅ Report submitted successfully!");
+        setSubmitted(true);
+      } else {
+        setMessage(`❌ ${data.message || "Failed to submit report"}`);
+      }
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      setMessage("⚠️ Server error. Please try again later.");
+    }
+
+    setTimeout(() => setMessage(""), 3000);
   };
 
   const handleChatNow = (expert: Expert) => {
@@ -79,7 +115,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      {/* Left Section */}
       <div className="w-full md:w-1/2 flex justify-center items-center p-8 relative">
         {!submitted ? (
           <form
@@ -89,6 +124,12 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
             <h2 className="text-xl font-semibold text-legal-navy mb-4 text-center">
               File a New Report
             </h2>
+
+            {message && (
+              <div className="text-center mb-4 text-sm font-medium text-green-600">
+                {message}
+              </div>
+            )}
 
             <label className="block text-gray-700 text-sm font-medium mb-2">
               Type of Crime
@@ -214,7 +255,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Right Section */}
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center bg-white shadow-inner p-8 text-center">
         <h2 className="text-2xl font-semibold mb-4 text-legal-navy">
           Reports Dashboard

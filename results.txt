@@ -1,0 +1,78 @@
+{'loss': 0.0219, 'grad_norm': 1.0164828300476074, 'learning_rate': 4.291287386215864e-07, 'epoch': 99.87}                        
+{'loss': 0.005, 'grad_norm': 0.1958053708076477, 'learning_rate': 3.5110533159947976e-07, 'epoch': 99.9}                         
+{'loss': 0.0047, 'grad_norm': 0.9036898612976074, 'learning_rate': 2.730819245773732e-07, 'epoch': 99.92}                        
+{'loss': 0.0079, 'grad_norm': 0.6011399626731873, 'learning_rate': 1.9505851755526657e-07, 'epoch': 99.95}                       
+{'eval_loss': 2.5571236610412598, 'eval_runtime': 0.9501, 'eval_samples_per_second': 81.042, 'eval_steps_per_second': 21.05, 'epoch': 99.95}                                                                                                                      
+{'loss': 0.0147, 'grad_norm': 0.23955757915973663, 'learning_rate': 1.1703511053315994e-07, 'epoch': 99.97}                      
+{'loss': 0.0061, 'grad_norm': 0.20412515103816986, 'learning_rate': 3.901170351105331e-08, 'epoch': 100.0}                       
+100%|██████████████████████████████████████████████████████████████████████████████████████| 7700/7700 [1:00:19<00:00,  2.37it/s]There were missing keys in the checkpoint model loaded: ['encoder.embed_tokens.weight', 'decoder.embed_tokens.weight'].
+{'train_runtime': 3621.266, 'train_samples_per_second': 8.505, 'train_steps_per_second': 2.126, 'train_loss': 0.17691050302222153, 'epoch': 100.0}
+100%|██████████████████████████████████████████████████████████████████████████████████████| 7700/7700 [1:00:21<00:00,  2.13it/s]
+Training completed successfully!
+Model saved to ./legal-llm-bns
+
+============================================================
+STARTING COMPREHENSIVE EVALUATION
+============================================================
+Loading sentence transformer for similarity calculation...
+
+Evaluating on 77 samples...
+
+Generating predictions...
+Progress: 0/77
+Progress: 10/77
+Progress: 20/77
+Progress: 30/77
+Progress: 40/77
+Progress: 50/77
+Progress: 60/77
+Progress: 70/77
+
+Calculating evaluation metrics...
+Calculating semantic similarities...
+
+============================================================
+EVALUATION RESULTS
+============================================================
+
+📊 ACCURACY METRICS:
+   Exact Match Accuracy: 0.00%
+   Exact Matches: 0/77
+
+📝 BLEU SCORE:
+   BLEU: 55.45%
+   BLEU-1: 62.48%
+   BLEU-2: 51.98%
+   BLEU-3: 57.12%
+   BLEU-4: 47.45%
+
+📊 ROUGE SCORES:
+   ROUGE-1: 59.23%
+   ROUGE-2: 51.31%
+   ROUGE-L: 53.50%
+
+🎯 SEMANTIC SIMILARITY:
+   Average Similarity: 84.83%
+   Min Similarity: 70.38%
+   Max Similarity: 99.28%
+
+⏱️  RESPONSE TIME:
+   Average Response Time: 783.76 ms
+   Median Response Time: 727.22 ms
+   Min Response Time: 421.43 ms
+   Max Response Time: 1446.79 ms
+
+💾 Saving detailed evaluation results...
+Detailed results saved to ./legal-llm-bns/evaluation_results.txt
+
+============================================================
+QUICK TEST EXAMPLE
+============================================================
+
+Question: Someone sent me a fake invoice claiming I owe money for services I never used.
+Answer: This is phishing and cyber fraud under Section 318 BNS for cheating. Do not share details, preserve the invoice, and report to cybercrime authorities.
+Response Time: 600.29 ms
+
+============================================================
+EVALUATION COMPLETE!
+============================================================

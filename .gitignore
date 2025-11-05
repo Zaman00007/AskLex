@@ -10,3 +10,5 @@ hindi-llm-finetuned/
 __pycache__
 
 node_modules
+
+hybrid_legal_model

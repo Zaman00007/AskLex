@@ -13,12 +13,10 @@ const REPORTS_FILE = './reports.csv';
 app.use(cors());
 app.use(bodyParser.json());
 
-// Initialize users.csv
 if (!fs.existsSync(USERS_FILE)) {
   fs.writeFileSync(USERS_FILE, 'fullName,email,password\n');
 }
 
-// Initialize reports.csv
 if (!fs.existsSync(REPORTS_FILE)) {
   fs.writeFileSync(REPORTS_FILE, 'email,crimeType,incident,culpritName,date,time\n');
 }
@@ -62,7 +60,6 @@ app.post('/register', async (req, res) => {
   res.json({ message: 'Registration successful' });
 });
 
-// 🔐 Login endpoint
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const users = await readUsers();
@@ -74,7 +71,6 @@ app.post('/login', async (req, res) => {
   res.json({ message: 'Login successful', fullName: user.fullName, email });
 });
 
-// 🧾 Submit report endpoint
 app.post('/report', async (req, res) => {
   const { email, crimeType, incident, culpritName, date, time } = req.body;
 

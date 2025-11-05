@@ -96,7 +96,6 @@ function App() {
       />
     );
 
-  // --- MAIN CHAT PAGE ---
   return (
     <div className="h-screen bg-legal-light overflow-hidden">
       <Header

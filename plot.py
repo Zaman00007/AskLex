@@ -2,12 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the CSV
-df = pd.read_csv("plot.csv")
+df = pd.read_csv("./results/dataset2.csv")
 
-# Rename models
 df["Model Type"] = ["Hybrid", "T5"]
 
-# Define metric groups
 metrics_main = [
     "Exact Match Accuracy (%)", "BLEU Score (%)", "BLEU-1 (%)", "BLEU-2 (%)",
     "BLEU-3 (%)", "BLEU-4 (%)", "ROUGE-1 (%)", "ROUGE-2 (%)", "ROUGE-L (%)",

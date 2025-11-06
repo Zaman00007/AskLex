@@ -1,0 +1,2 @@
+similarity_mean,similarity_std,similarity_min,similarity_max,response_time_mean_ms,response_time_std_ms,response_time_median_ms,accuracy,bleu,rouge1,rouge2,rougeL,total_samples,exact_matches,evaluation_date
+74.83018040657043,16.623663902282715,28.77071499824524,99.27845001220703,766.6123563593085,266.92166931252274,700.4892826080322,0.0,35.55266129427888,59.14835375287322,40.30001584529165,53.51378938145387,77,0,2025-11-06 11:20:15

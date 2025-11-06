@@ -1,15 +1,36 @@
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, TrainingArguments, Trainer, DataCollatorForSeq2Seq
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 import evaluate
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 import time
 import numpy as np
+import pandas as pd
+from datetime import datetime
 
-model_name = "google/flan-t5-small"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+# ============ LOAD TRAINED MODEL ============
+print("="*60)
+print("LOADING TRAINED MODEL")
+print("="*60)
+
+model_path = "/home/zaman/Code/AskLex/hybrid_legal_model"
+print(f"Loading model from: {model_path}")
+
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+model.to(device)
+model.eval()
+
+print("Model loaded successfully!\n")
+
+# ============ LOAD EVALUATION DATA ============
+print("="*60)
+print("LOADING EVALUATION DATA")
+print("="*60)
 
 dataset = load_dataset("json", data_files="/home/zaman/Code/LLM/data_bns.json")
 
@@ -39,81 +60,24 @@ def preprocess(examples):
     model_inputs["labels"] = labels["input_ids"]
     return model_inputs
 
-print("Preprocessing dataset...")
 tokenized = dataset.map(preprocess, batched=True)
-
-print("Sample input:", tokenized["train"][0]["input_ids"][:10])
-print("Sample label:", tokenized["train"][0]["labels"][:10])
-
 train_test_split = tokenized["train"].train_test_split(test_size=0.2, seed=42)
-train_dataset = train_test_split["train"]
 eval_dataset = train_test_split["test"]
 
-print(f"Training samples: {len(train_dataset)}")
-print(f"Evaluation samples: {len(eval_dataset)}")
+print(f"Evaluation samples: {len(eval_dataset)}\n")
 
-data_collator = DataCollatorForSeq2Seq(
-    tokenizer=tokenizer,
-    model=model,
-    label_pad_token_id=-100, 
-    padding=True
-)
-
-training_args = TrainingArguments(
-    output_dir="./legal-llm-hybrid",
-    eval_strategy="steps",
-    eval_steps=8,  
-    save_strategy="steps",
-    save_steps=8,
-    learning_rate=3e-4,  
-    per_device_train_batch_size=4,  
-    per_device_eval_batch_size=4,
-    num_train_epochs=100,  
-    weight_decay=0.01,
-    warmup_steps=10,  
-    fp16=False,  
-    logging_dir="./logs",
-    logging_steps=2,  
-    load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
-    greater_is_better=False,
-    save_total_limit=3,  
-    prediction_loss_only=True,
-    dataloader_pin_memory=False,  
-)
-
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
-    data_collator=data_collator,
-    tokenizer=tokenizer, 
-)
-
-print("Starting training...")
-trainer.train()
-
-trainer.save_model("./legal-llm-hybrid")
-tokenizer.save_pretrained("./legal-llm-hybrid")
-
-print("Training completed successfully!")
-print("Model saved to ./legal-llm-hybrid")
-
-print("\n" + "="*60)
-print("STARTING COMPREHENSIVE EVALUATION")
+# ============ LOAD EVALUATION METRICS ============
 print("="*60)
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-model.eval()
+print("LOADING EVALUATION METRICS")
+print("="*60)
 
 bleu_metric = evaluate.load("bleu")
 rouge_metric = evaluate.load("rouge")
-
 print("Loading sentence transformer for similarity calculation...")
 similarity_model = SentenceTransformer('all-MiniLM-L6-v2')
+print("Metrics loaded successfully!\n")
 
+# ============ PREPARE EVALUATION DATA ============
 eval_questions = []
 eval_references = []
 
@@ -125,13 +89,17 @@ for item in eval_dataset:
     eval_questions.append(question)
     eval_references.append(reference)
 
-print(f"\nEvaluating on {len(eval_questions)} samples...")
+# ============ GENERATE PREDICTIONS ============
+print("="*60)
+print("GENERATING PREDICTIONS")
+print("="*60)
 
 predictions = []
 response_times = []
 exact_matches = 0
 
-print("\nGenerating predictions...")
+print(f"Evaluating on {len(eval_questions)} samples...\n")
+
 for i, question in enumerate(eval_questions):
     if i % 10 == 0:
         print(f"Progress: {i}/{len(eval_questions)}")
@@ -139,6 +107,7 @@ for i, question in enumerate(eval_questions):
     inputs = tokenizer(question, return_tensors="pt", max_length=512, truncation=True)
     inputs = {k: v.to(device) for k, v in inputs.items()}
     
+    # Measure response time
     start_time = time.time()
     with torch.no_grad():
         outputs = model.generate(**inputs, max_length=512, num_beams=4, early_stopping=True)
@@ -149,23 +118,33 @@ for i, question in enumerate(eval_questions):
     prediction = tokenizer.decode(outputs[0], skip_special_tokens=True)
     predictions.append(prediction)
     
+    # Check for exact match
     if prediction.strip().lower() == eval_references[i].strip().lower():
         exact_matches += 1
 
-print("\nCalculating evaluation metrics...")
+print("\nPredictions completed!\n")
 
+# ============ CALCULATE METRICS ============
+print("="*60)
+print("CALCULATING METRICS")
+print("="*60)
+
+# 1. Accuracy
 accuracy = (exact_matches / len(eval_questions)) * 100
 
+# 2. BLEU Score
 bleu_results = bleu_metric.compute(
     predictions=predictions,
     references=[[ref] for ref in eval_references]
 )
 
+# 3. ROUGE Score
 rouge_results = rouge_metric.compute(
     predictions=predictions,
     references=eval_references
 )
 
+# 4. Semantic Similarity
 print("Calculating semantic similarities...")
 pred_embeddings = similarity_model.encode(predictions)
 ref_embeddings = similarity_model.encode(eval_references)
@@ -179,10 +158,14 @@ avg_similarity = np.mean(similarities)
 min_similarity = np.min(similarities)
 max_similarity = np.max(similarities)
 
+# 5. Response Time
 avg_response_time = np.mean(response_times)
 median_response_time = np.median(response_times)
 
-print("\n" + "="*60)
+print("Metrics calculated!\n")
+
+# ============ DISPLAY RESULTS ============
+print("="*60)
 print("EVALUATION RESULTS")
 print("="*60)
 
@@ -213,35 +196,108 @@ print(f"   Median Response Time: {median_response_time*1000:.2f} ms")
 print(f"   Min Response Time: {min(response_times)*1000:.2f} ms")
 print(f"   Max Response Time: {max(response_times)*1000:.2f} ms")
 
-print("\n💾 Saving detailed evaluation results...")
-with open("./legal-llm-hybrid/evaluation_results.txt", "w") as f:
-    f.write("="*60 + "\n")
-    f.write("DETAILED EVALUATION RESULTS\n")
-    f.write("="*60 + "\n\n")
-    
-    f.write(f"Total Samples: {len(eval_questions)}\n\n")
-    
-    f.write(f"Exact Match Accuracy: {accuracy:.2f}%\n")
-    f.write(f"BLEU Score: {bleu_results['bleu']*100:.2f}%\n")
-    f.write(f"Average Semantic Similarity: {avg_similarity*100:.2f}%\n")
-    f.write(f"Average Response Time: {avg_response_time*1000:.2f} ms\n\n")
-    
-    f.write("="*60 + "\n")
-    f.write("SAMPLE PREDICTIONS (First 10)\n")
-    f.write("="*60 + "\n\n")
-    
-    for i in range(min(10, len(eval_questions))):
-        f.write(f"Sample {i+1}:\n")
-        f.write(f"Question: {eval_questions[i]}\n")
-        f.write(f"Reference: {eval_references[i]}\n")
-        f.write(f"Prediction: {predictions[i]}\n")
-        f.write(f"Similarity: {similarities[i]*100:.2f}%\n")
-        f.write(f"Response Time: {response_times[i]*1000:.2f} ms\n")
-        f.write("-"*60 + "\n\n")
+# ============ SAVE TO CSV ============
+print("\n" + "="*60)
+print("SAVING RESULTS TO CSV")
+print("="*60)
 
-print("Detailed results saved to ./legal-llm-hybrid/evaluation_results.txt")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-# Quick test example
+# 1. Save detailed predictions CSV
+detailed_df = pd.DataFrame({
+    'question': eval_questions,
+    'reference_answer': eval_references,
+    'predicted_answer': predictions,
+    'semantic_similarity': [s * 100 for s in similarities],
+    'response_time_ms': [t * 1000 for t in response_times],
+    'exact_match': [pred.strip().lower() == ref.strip().lower() 
+                    for pred, ref in zip(predictions, eval_references)]
+})
+
+detailed_csv_path = f"{model_path}/evaluation_detailed_{timestamp}.csv"
+detailed_df.to_csv(detailed_csv_path, index=False, encoding='utf-8')
+print(f"✅ Detailed predictions saved to: {detailed_csv_path}")
+
+# 2. Save summary metrics CSV
+summary_df = pd.DataFrame({
+    'Metric': [
+        'Exact Match Accuracy (%)',
+        'BLEU Score (%)',
+        'BLEU-1 (%)',
+        'BLEU-2 (%)',
+        'BLEU-3 (%)',
+        'BLEU-4 (%)',
+        'ROUGE-1 (%)',
+        'ROUGE-2 (%)',
+        'ROUGE-L (%)',
+        'Avg Semantic Similarity (%)',
+        'Min Semantic Similarity (%)',
+        'Max Semantic Similarity (%)',
+        'Avg Response Time (ms)',
+        'Median Response Time (ms)',
+        'Min Response Time (ms)',
+        'Max Response Time (ms)',
+        'Total Samples',
+        'Exact Matches'
+    ],
+    'Value': [
+        f"{accuracy:.2f}",
+        f"{bleu_results['bleu']*100:.2f}",
+        f"{bleu_results['precisions'][0]*100:.2f}",
+        f"{bleu_results['precisions'][1]*100:.2f}",
+        f"{bleu_results['precisions'][2]*100:.2f}",
+        f"{bleu_results['precisions'][3]*100:.2f}",
+        f"{rouge_results['rouge1']*100:.2f}",
+        f"{rouge_results['rouge2']*100:.2f}",
+        f"{rouge_results['rougeL']*100:.2f}",
+        f"{avg_similarity*100:.2f}",
+        f"{min_similarity*100:.2f}",
+        f"{max_similarity*100:.2f}",
+        f"{avg_response_time*1000:.2f}",
+        f"{median_response_time*1000:.2f}",
+        f"{min(response_times)*1000:.2f}",
+        f"{max(response_times)*1000:.2f}",
+        f"{len(eval_questions)}",
+        f"{exact_matches}"
+    ]
+})
+
+summary_csv_path = f"{model_path}/evaluation_summary_{timestamp}.csv"
+summary_df.to_csv(summary_csv_path, index=False)
+print(f"✅ Summary metrics saved to: {summary_csv_path}")
+
+# 3. Save statistics CSV (for analysis)
+stats_df = pd.DataFrame({
+    'similarity_mean': [avg_similarity * 100],
+    'similarity_std': [np.std(similarities) * 100],
+    'similarity_min': [min_similarity * 100],
+    'similarity_max': [max_similarity * 100],
+    'response_time_mean_ms': [avg_response_time * 1000],
+    'response_time_std_ms': [np.std(response_times) * 1000],
+    'response_time_median_ms': [median_response_time * 1000],
+    'accuracy': [accuracy],
+    'bleu': [bleu_results['bleu'] * 100],
+    'rouge1': [rouge_results['rouge1'] * 100],
+    'rouge2': [rouge_results['rouge2'] * 100],
+    'rougeL': [rouge_results['rougeL'] * 100],
+    'total_samples': [len(eval_questions)],
+    'exact_matches': [exact_matches],
+    'evaluation_date': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+})
+
+stats_csv_path = f"{model_path}/evaluation_statistics_{timestamp}.csv"
+stats_df.to_csv(stats_csv_path, index=False)
+print(f"✅ Statistics saved to: {stats_csv_path}")
+
+print("\n" + "="*60)
+print("EVALUATION COMPLETE!")
+print("="*60)
+print(f"\n📁 All results saved in: {model_path}")
+print(f"   - Detailed predictions: evaluation_detailed_{timestamp}.csv")
+print(f"   - Summary metrics: evaluation_summary_{timestamp}.csv")
+print(f"   - Statistics: evaluation_statistics_{timestamp}.csv")
+
+# ============ QUICK TEST EXAMPLE ============
 print("\n" + "="*60)
 print("QUICK TEST EXAMPLE")
 print("="*60)
@@ -260,6 +316,4 @@ print(f"\nQuestion: {test_question}")
 print(f"Answer: {response}")
 print(f"Response Time: {(end_time - start_time)*1000:.2f} ms")
 
-print("\n" + "="*60)
-print("EVALUATION COMPLETE!")
-print("="*60)
+print("\n✨ Evaluation pipeline completed successfully! ✨")

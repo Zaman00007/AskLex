@@ -1,0 +1,19 @@
+Metric,Value
+Exact Match Accuracy (%),0.00
+BLEU Score (%),35.55
+BLEU-1 (%),62.48
+BLEU-2 (%),41.98
+BLEU-3 (%),33.12
+BLEU-4 (%),27.45
+ROUGE-1 (%),59.15
+ROUGE-2 (%),40.30
+ROUGE-L (%),53.51
+Avg Semantic Similarity (%),74.83
+Min Semantic Similarity (%),28.77
+Max Semantic Similarity (%),99.28
+Avg Response Time (ms),766.61
+Median Response Time (ms),700.49
+Min Response Time (ms),414.84
+Max Response Time (ms),2294.59
+Total Samples,77
+Exact Matches,0

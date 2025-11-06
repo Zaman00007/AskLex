@@ -14,7 +14,7 @@ print("="*60)
 print("LOADING TRAINED MODEL")
 print("="*60)
 
-model_path = "/home/zaman/Code/AskLex/hybrid_legal_model"
+model_path = "/home/zaman/Code/AskLex/legal-llm-bns"
 print(f"Loading model from: {model_path}")
 
 tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -27,7 +27,6 @@ model.eval()
 
 print("Model loaded successfully!\n")
 
-# ============ LOAD EVALUATION DATA ============
 print("="*60)
 print("LOADING EVALUATION DATA")
 print("="*60)

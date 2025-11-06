@@ -1,0 +1,3 @@
+Model Type,Exact Match Accuracy (%),BLEU Score (%),BLEU-1 (%),BLEU-2 (%),BLEU-3 (%),BLEU-4 (%),ROUGE-1 (%),ROUGE-2 (%),ROUGE-L (%),Avg Semantic Similarity (%),Min Semantic Similarity (%),Max Semantic Similarity (%),Avg Response Time (ms),Median Response Time (ms),Min Response Time (ms),Max Response Time (ms),Total Samples,Exact Matches
+Model 1,0.0,55.45,62.48,51.98,57.12,47.45,59.23,51.31,53.5,84.83,70.38,99.28,783.76,727.22,421.43,1446.79,77,0
+Model 2,0.0,35.55,62.48,41.98,33.12,27.45,59.15,40.3,53.51,74.83,28.77,99.28,766.61,700.49,414.84,2294.59,77,0

@@ -27,7 +27,6 @@ print("\nFine-tuning Sentence-BERT on Q–A similarity...")
 sbert_name = "sentence-transformers/all-MiniLM-L6-v2"
 sbert_model = SentenceTransformer(sbert_name)
 
-# Fixed: Use MultipleNegativesRankingLoss for Q-A pairs
 examples = []
 for item in train_data:
     q = item["question"]
@@ -35,12 +34,11 @@ for item in train_data:
     examples.append(InputExample(texts=[q, a]))
 
 train_dataloader = DataLoader(examples, shuffle=True, batch_size=8)
-# Changed to MultipleNegativesRankingLoss which is better for Q-A pairs
 train_loss = losses.MultipleNegativesRankingLoss(model=sbert_model)
 
 sbert_model.fit(
     train_objectives=[(train_dataloader, train_loss)],
-    epochs=3,  # Increased from 1
+    epochs=3, 
     warmup_steps=100,
     show_progress_bar=True
 )
